@@ -39,9 +39,7 @@ class MusicDb:
 
 	def search(self, title):
 		return self.database.get_entries_by_title(title)
-<<<<<<< HEAD
 
 	def search_album(self, album):
 		return self.database.get_entries_by_album(album)
-=======
->>>>>>> 0fcfa29deb178e8c1193e8db1a9e43aea31b9778
+

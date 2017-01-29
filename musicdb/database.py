@@ -31,10 +31,7 @@ class Database:
                       `title` varchar(255) NOT NULL,
                       `album` varchar(255) NOT NULL,
                       `artist` varchar(255) NOT NULL,
-<<<<<<< HEAD
                       `track` int(11) NULL,
-=======
->>>>>>> 0fcfa29deb178e8c1193e8db1a9e43aea31b9778
                       `tag_hash` varchar(32) NOT NULL,
                       `added_on` int(11) NOT NULL,
                       PRIMARY KEY (`music_tag_id`)
@@ -82,15 +79,9 @@ class Database:
         cur = conn.cursor()
         timestamp = int(time.time())
 
-<<<<<<< HEAD
         query = """INSERT INTO music_tags (music_entry_id, title, album, artist, track, tag_hash, added_on) VALUES (%s, %s, %s, %s, %s, %s, %s)"""
 
         cur.execute(query, (music_entry.id, music_entry.tag.title, music_entry.tag.album, music_entry.tag.artist, music_entry.tag.track, music_entry.tag.hash, timestamp, ))
-=======
-        query = """INSERT INTO music_tags (music_entry_id, title, album, artist, tag_hash, added_on) VALUES (%s, %s, %s, %s, %s, %s)"""
-
-        cur.execute(query, (music_entry.id, music_entry.tag.title, music_entry.tag.album, music_entry.tag.artist, music_entry.tag.hash, timestamp, ))
->>>>>>> 0fcfa29deb178e8c1193e8db1a9e43aea31b9778
 
         conn.commit()
 
@@ -123,7 +114,6 @@ class Database:
 
         return music_entry_id
 
-<<<<<<< HEAD
     def get_entries_by_album(self, album, count=100):
         entries = []
 
@@ -162,19 +152,14 @@ class Database:
 
         return entries
 
-=======
->>>>>>> 0fcfa29deb178e8c1193e8db1a9e43aea31b9778
     def get_entries_by_title(self, title, count=100):
         entries = []
 
         conn = self.connect()
         cur = conn.cursor()
 
-<<<<<<< HEAD
+
         query = """SELECT e.music_entry_id, e.file_path, e.file_name, e.file_hash, e.added_on, t.music_tag_id, t.title, t.artist, t.album, t.track, t.tag_hash
-=======
-        query = """SELECT e.music_entry_id, e.file_path, e.file_name, e.file_hash, e.added_on, t.music_tag_id, t.title, t.artist, t.album, t.tag_hash
->>>>>>> 0fcfa29deb178e8c1193e8db1a9e43aea31b9778
                 FROM music_tags t
                 JOIN music_entries e ON e.music_entry_id = t.music_entry_id
                 WHERE t.title LIKE %s
@@ -195,12 +180,8 @@ class Database:
             music_entry.tag.title = row[6]
             music_entry.tag.artist = row[7]
             music_entry.tag.album = row[8]
-<<<<<<< HEAD
             music_entry.tag.track = int(row[9])
             music_entry.tag.hash = row[10]
-=======
-            music_entry.tag.hash = row[9]
->>>>>>> 0fcfa29deb178e8c1193e8db1a9e43aea31b9778
 
             entries.append(music_entry)
 

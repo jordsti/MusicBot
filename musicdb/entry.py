@@ -8,19 +8,12 @@ class MusicTag:
         self.title = ""
         self.album = ""
         self.artist = ""
-<<<<<<< HEAD
         self.track = 0
-=======
->>>>>>> 0fcfa29deb178e8c1193e8db1a9e43aea31b9778
         self.hash = ""
 
     def generate_hash(self):
         hasher = hashlib.md5()
-<<<<<<< HEAD
         hasher.update("{0}{1}{2}{3}".format(self.title, self.artist, self.album, self.track).encode("utf8"))
-=======
-        hasher.update("{0}{1}{2}".format(self.title, self.artist, self.album).encode("utf8"))
->>>>>>> 0fcfa29deb178e8c1193e8db1a9e43aea31b9778
         self.hash = hasher.hexdigest()
 
 class MusicEntry:
@@ -44,7 +37,6 @@ class MusicEntry:
     def read_tags(self):
         m = EasyID3(self.file_path)
         self.tag = MusicTag()
-<<<<<<< HEAD
 
         self.tag.title = self.try_get_tag('title', m)
         self.tag.album = self.try_get_tag('album', m)
@@ -64,12 +56,6 @@ class MusicEntry:
             else:
                 print("Track number not found in tag")
 
-
-=======
-        self.tag.title = self.try_get_tag('title', m)
-        self.tag.album = self.try_get_tag('album', m)
-        self.tag.artist = self.try_get_tag('artist', m)
->>>>>>> 0fcfa29deb178e8c1193e8db1a9e43aea31b9778
         self.tag.generate_hash()
 
     def try_get_tag(self, tag_name, id3):
