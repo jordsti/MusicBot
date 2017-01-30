@@ -549,9 +549,9 @@ class MusicBot(discord.Client):
     # noinspection PyMethodOverriding
     def run(self):
 
-        #running music db first
-        #self.musicdb.scan()
-
+        # running music db first
+        self.musicdb.update_database_schema()
+        self.musicdb.scan()
 
         try:
             self.loop.run_until_complete(self.start(*self.config.auth))

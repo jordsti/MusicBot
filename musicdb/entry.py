@@ -16,6 +16,7 @@ class MusicTag:
         hasher.update("{0}{1}{2}{3}".format(self.title, self.artist, self.album, self.track).encode("utf8"))
         self.hash = hasher.hexdigest()
 
+
 class MusicEntry:
     def __init__(self, file_path, filename):
         self.tag = None
@@ -42,14 +43,13 @@ class MusicEntry:
         self.tag.album = self.try_get_tag('album', m)
         self.tag.artist = self.try_get_tag('artist', m)
 
-
         try:
             self.tag.track = int(self.try_get_tag('tracknumber', m))
         except:
 
             # try to parse the track number from the file name
             import re
-            title_re = re.compile("""(?P<number>[0-9]{1,3}) ?- ?.+\.mp3""")
+            title_re = re.compile("""(?P<number>[0-9]{1,3}) ?-? ?.+\.mp3""")
             m = title_re.match(self.filename)
             if m:
                 self.tag.track = int(m.group("number"))

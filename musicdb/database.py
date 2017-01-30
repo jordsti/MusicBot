@@ -1,9 +1,10 @@
 import MySQLdb
 import time
 from .entry import MusicEntry, MusicTag
+from .migration import generate_structures_hash, DbStructureVersion
 
 class Database:
-    def __init__(self,db_user, db_password, db_database, hostname='localhost', port=3306, charset='utf8'):
+    def __init__(self, db_user, db_password, db_database, hostname='localhost', port=3306, charset='utf8'):
         self.db_user = db_user
         self.db_password = db_password
         self.db_database = db_database
@@ -11,6 +12,7 @@ class Database:
         self.port = port
         self.charset = charset
         self.__init_tables()
+        self.migrations = []
 
     def __init_tables(self):
         conn = self.connect()
@@ -37,9 +39,34 @@ class Database:
                       PRIMARY KEY (`music_tag_id`)
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8; """)
 
+        cur.execute("""CREATE TABLE IF NOT EXISTS `musicdb_versions` (
+                        `musicdb_version_id` INT(11) NOT NULL AUTO_INCREMENT,
+                        `migration_name` VARCHAR(255) NOT NULL,
+                        `structure_hash` VARCHAR(64) NOT NULL,
+                        `executed_on` INT(11) NOT NULL,
+                        `version_number` INT(11) NOT NULL,
+                        PRIMARY KEY (`musicdb_version_id`)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8; """)
+
+        query = """SELECT COUNT(musicdb_version_id) FROM musicdb_versions"""
+        cur.execute(query)
+
+        conn.commit()
+
+        row = cur.fetchone()
+        if row:
+            if row[0] == 0:
+                self.__add_initial_db_version(conn)
+
         conn.commit()
         cur.close()
         conn.close()
+
+    def __add_initial_db_version(self, conn):
+        # generating structure hash
+        database_hash = generate_structures_hash(conn)
+        db_version = DbStructureVersion("Initial Structure", database_hash, int(time.time()), 0)
+        self.add_db_version(db_version)
 
     def connect(self):
         conn = None
@@ -48,6 +75,58 @@ class Database:
         except Exception as e:
             print("MySQL Connection error : {0}".format(e))
         return conn
+
+    def remove_db_version(self, db_version):
+        conn = self.connect()
+        cur = conn.cursor()
+
+        query = """DELETE FROM musicdb_versions WHERE musicdb_version_id = %s"""
+        cur.execute(query, (db_version.id,))
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+    def add_db_version(self, db_version):
+        conn = self.connect()
+        cur = conn.cursor()
+
+        query = """INSERT INTO musicdb_versions (migration_name, structure_hash, executed_on, version_number) VALUES (%s, %s, %s, %s)"""
+        cur.execute(query, (db_version.migration_name, db_version.structure_hash, db_version.executed_on, db_version.version_number, ))
+
+        conn.commit()
+
+        query = """SELECT musicdb_version_id FROM musicdb_versions WHERE structure_hash = %s AND version_number = %s"""
+        cur.execute(query, (db_version.structure_hash, db_version.version_number,))
+
+        row = cur.fetchone()
+        if row:
+            db_version.id = int(row[0])
+
+        cur.close()
+        conn.close()
+
+    def get_db_versions(self, conn=None):
+        versions = []
+        if conn is None:
+            conn = self.connect()
+
+        cur = conn.cursor()
+
+        query = """SELECT musicdb_version_id, migration_name, structure_hash, executed_on, version_number FROM musicdb_versions"""
+
+        cur.execute(query)
+
+        rows = cur.fetchall()
+
+        for row in rows:
+            db_version = DbStructureVersion(row[1], row[2], int(row[3]), row[4], row[0])
+            versions.append(db_version)
+
+        cur.close()
+        conn.close()
+
+        return versions
 
     def add_music_entry(self, music_entry):
         conn = self.connect()
@@ -162,10 +241,11 @@ class Database:
         query = """SELECT e.music_entry_id, e.file_path, e.file_name, e.file_hash, e.added_on, t.music_tag_id, t.title, t.artist, t.album, t.track, t.tag_hash
                 FROM music_tags t
                 JOIN music_entries e ON e.music_entry_id = t.music_entry_id
-                WHERE t.title LIKE %s
+                JOIN music_keywords k ON k.music_entry_id = t.music_entry_id
+                WHERE t.title LIKE %s OR k.keywords LIKE %s
                 LIMIT %s """
 
-        cur.execute(query, ("%{0}%".format(title), count, ))
+        cur.execute(query, ("%{0}%".format(title), "%{0}%".format(title), count, ))
 
         rows = cur.fetchall()
 
@@ -189,3 +269,15 @@ class Database:
         conn.close()
 
         return entries
+
+    def add_keyword(self, music_entry_id, keyword):
+        conn = self.connect()
+        cur = conn.cursor()
+
+        query = """INSERT INTO music_keywords (music_entry_id, keywords) VALUES (%s, %s)"""
+
+        cur.execute(query, (music_entry_id, keyword, ))
+
+        conn.commit()
+        cur.close()
+        conn.close()
