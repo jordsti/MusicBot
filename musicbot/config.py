@@ -78,6 +78,15 @@ class Config:
         self.delete_messages  = config.getboolean('MusicBot', 'DeleteMessages', fallback=ConfigDefaults.delete_messages)
         self.delete_invoking = config.getboolean('MusicBot', 'DeleteInvoking', fallback=ConfigDefaults.delete_invoking)
         self.debug_mode = config.getboolean('MusicBot', 'DebugMode', fallback=ConfigDefaults.debug_mode)
+        self.media_root = config.get('MusicBot', 'MediaRoot', fallback=ConfigDefaults.media_root)
+
+        #database section
+        self.database_driver = config.get('Database', 'Driver', fallback=ConfigDefaults.default_database)
+        self.sqlite_file = config.get('Database', 'SQLiteFile', fallback=ConfigDefaults.sqlite_file)
+        self.db_user = config.get('Database', 'DbUser', fallback=ConfigDefaults.db_user)
+        self.db_password = config.get('Database', 'DbPassword', fallback=ConfigDefaults.db_password)
+        self.db_address = config.get('Database', 'DbAddress', fallback=ConfigDefaults.db_address)
+        self.db_name = config.get('Database', 'DbName', fallback=ConfigDefaults.db_name)
 
         self.blacklist_file = config.get('Files', 'BlacklistFile', fallback=ConfigDefaults.blacklist_file)
         self.auto_playlist_file = config.get('Files', 'AutoPlaylistFile', fallback=ConfigDefaults.auto_playlist_file)
@@ -191,6 +200,13 @@ class ConfigDefaults:
     options_file = 'config/options.ini'
     blacklist_file = 'config/blacklist.txt'
     auto_playlist_file = 'config/autoplaylist.txt' # this will change when I add playlists
+    default_database = 'sqlite'
+    sqlite_file = 'config/db.sqlite'
+    db_address = 'localhost'
+    db_user = 'musicbot'
+    db_password = ''
+    db_name = 'musicbot'
+    media_root = '/media/music'
 
 # These two are going to be wrappers for the id lists, with add/remove/load/save functions
 # and id/object conversion so types aren't an issue

@@ -1,17 +1,23 @@
-from .database import Database
+from .database import Database, SQLiteDatabase
+from .MySqlDatabase import MySqlDatabase
 from .scanner import MusicScanner
 from .migration import MigrationManager
 
 class MusicDb:
-    def __init__(self, root="."):
-        # todo config file
-        self.database = Database('musicbot', '', 'musicbot')
+    def __init__(self, root, db_driver, db_info):
+        self.migration_manager = None
+        if db_driver == 'sqlite':
+            self.database = SQLiteDatabase(db_info['filename'])
+        elif db_driver == 'mysql':
+            self.database = MySqlDatabase(db_info['user'], db_info['password'], db_info['name'], db_info['address'])
+            self.migration_manager = MigrationManager(self.database)
+
         self.scanner = MusicScanner()
         self.root = root
-        self.migration_manager = MigrationManager(self.database)
 
     def update_database_schema(self):
-        self.migration_manager.run_migrations()
+        if self.migration_manager is not None:
+            self.migration_manager.run_migrations()
 
     def scan(self, verbose=True):
         self.scanner.scan_folder(self.root)
@@ -43,8 +49,8 @@ class MusicDb:
         if verbose:
             print("Scanning complete")
 
-    def search(self, title):
-        return self.database.get_entries_by_title(title)
+    def search(self, title, count=100):
+        return self.database.get_entries_by_title(title, count)
 
     def search_album(self, album):
         return self.database.get_entries_by_album(album)

@@ -83,7 +83,9 @@ class MusicBot(discord.Client):
         self.exit_signal = None
         self.init_ok = False
         self.cached_client_id = None
-        self.musicdb = musicdb.MusicDb("/media/music")
+        db_info = { 'filename': self.config.sqlite_file, 'user': self.config.db_user, 'password': self.config.db_password, 'name': self.config.db_name, 'address': self.config.db_address }
+
+        self.musicdb = musicdb.MusicDb(self.config.media_root, self.config.database_driver, db_info)
         if not self.autoplaylist:
             print("Warning: Autoplaylist is empty, disabling.")
             self.config.auto_playlist = False
@@ -881,6 +883,28 @@ class MusicBot(discord.Client):
 
             self.cmd_play(player, channel, author, permissions, leftover_args, album)
 
+    async def cmd_playid(self, player, channel, author, permissions, leftover_args, id):
+        if permissions.max_songs and player.playlist.count_for_user(author) >= permissions.max_songs:
+            raise exceptions.PermissionsError(
+                "You have reached your enqueued song limit (%s)" % permissions.max_songs, expire_in=30
+            )
+
+        return
+        # todo playid
+        await self.send_typing(channel)
+        db_entries = self.musicdb.search(id, 25)
+        if len(db_entries) > 0:
+            # we got a local match
+            print("Local match : {0}".format(db_entries[0].file_path))
+            await player.playlist.add_local_entry(db_entries[0])
+            procmsg = await self.safe_send_message(channel, "Song found locally : {0} - {1} ({2})".format(db_entries[0].tag.artist, db_entries[0].tag.title, db_entries[0].tag.album))
+            if len(db_entries) > 1:
+                print("More than one matches found")
+                procmsg = await self.safe_send_message(channel, "{0} matches found for {1}".format(len(db_entries), song_url))
+                for e in db_entries:
+                    procmsg = await self.safe_send_message(channel, "#{0}, {1} - {2} ({3})".format(e.id, e.tag.artist, e.tag.title, e.tag.album))
+
+            return
 
     async def cmd_play(self, player, channel, author, permissions, leftover_args, song_url):
         """
@@ -904,12 +928,18 @@ class MusicBot(discord.Client):
         if leftover_args:
             song_url = ' '.join([song_url, *leftover_args])
 
-        db_entries = self.musicdb.search(song_url)
+        db_entries = self.musicdb.search(song_url, 25)
         if len(db_entries) > 0:
             # we got a local match
             print("Local match : {0}".format(db_entries[0].file_path))
             await player.playlist.add_local_entry(db_entries[0])
             procmsg = await self.safe_send_message(channel, "Song found locally : {0} - {1} ({2})".format(db_entries[0].tag.artist, db_entries[0].tag.title, db_entries[0].tag.album))
+            if len(db_entries) > 1:
+                print("More than one matches found")
+                procmsg = await self.safe_send_message(channel, "{0} matches found for {1}".format(len(db_entries), song_url))
+                for e in db_entries:
+                    procmsg = await self.safe_send_message(channel, "#{0}, {1} - {2} ({3})".format(e.id, e.tag.artist, e.tag.title, e.tag.album))
+
             return
 
         try:
